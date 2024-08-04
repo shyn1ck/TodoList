@@ -148,15 +148,15 @@ func DeleteTask() {
 func InsertDataTasks() {
 
 	tasks := []models.Task{
-		{Title: "Изучить основы Go", Description: "Пройти курс по основам Go на платформе онлайн-обучения", Priority: 1},
-		{Title: "Сделать домашнее задание по алгоритмам", Description: "Решить задачи по алгоритмам и структурам данных", Priority: 2},
+		{Title: "Изучить основы Go", Description: "Пройти курс по основам Go на платформе онлайн-обучения", Priority: 1, IsDone: true},
+		{Title: "Сделать домашнее задание по алгоритмам", Description: "Решить задачи по алгоритмам и структурам данных", Priority: 2, IsDone: true},
 		{Title: "Работа с базами данных", Description: "Изучить SQL и ORM для работы с базами данных", Priority: 3},
-		{Title: "Разработка API", Description: "Разработать REST API для учебного проекта", Priority: 2},
+		{Title: "Разработка API", Description: "Разработать REST API для учебного проекта", Priority: 2, IsDone: true},
 		{Title: "Прочитать книгу по программированию", Description: "Прочитать книгу 'Чистый код' Роберта Мартина", Priority: 1},
 		{Title: "Участие в хакатоне", Description: "Принять участие в студенческом хакатоне", Priority: 3},
 		{Title: "Создать GitHub репозиторий", Description: "Создать и настроить репозиторий для учебных проектов на GitHub", Priority: 2},
-		{Title: "Установить среду разработки", Description: "Настроить IDE и все необходимые плагины для работы", Priority: 1},
-		{Title: "Проектирование системы", Description: "Разработать архитектуру системы для учебного проекта", Priority: 3},
+		{Title: "Установить среду разработки", Description: "Настроить IDE и все необходимые плагины для работы", Priority: 1, IsDone: true},
+		{Title: "Проектирование системы", Description: "Разработать архитектуру системы для учебного проекта", Priority: 3, IsDone: true},
 		{Title: "Учебный проект: веб-приложение", Description: "Создать простое веб-приложение с использованием фреймворка", Priority: 2},
 	}
 
@@ -231,38 +231,61 @@ func FilterTasksByIsDone() {
 func SortTasks() {
 	var sortOption string
 
-	fmt.Println("Введите опцию сортировки (data/status/priority):")
+	fmt.Println("Введите опцию сортировки (date/status/priority):")
 	_, err := fmt.Scan(&sortOption)
 	if err != nil {
 		fmt.Println("Ошибка при чтении опции сортировки:", err)
 		return
 	}
 
-	var tasks []models.Task
 	switch strings.ToLower(sortOption) {
-	case "data":
-		tasks, err = repository.SortTasksByDate()
+	case "date":
+		SortTasksByDate()
 	case "status":
-		tasks, err = repository.SortTasksByStatus()
+		SortTasksByStatus()
 	case "priority":
-		tasks, err = repository.SortTasksByPriority()
+		SortTasksByPriority()
 	default:
-		fmt.Println("Недопустимая опция сортировки. Используйте 'data', 'status' или 'priority'.")
-		return
+		fmt.Println("Неверная опция сортировки. Используйте 'date', 'status' или 'priority'.")
 	}
-
+}
+func SortTasksByPriority() {
+	tasks, err := repository.SortTasksByPriority()
 	if err != nil {
-		fmt.Println("Ошибка при сортировке задач:", err)
+		fmt.Println("Ошибка при сортировке задач по приоритету:", err)
 		return
 	}
 
-	fmt.Println("Отсортированные задачи:")
+	fmt.Println("Отсортированные задачи по приоритету:")
 	for _, task := range tasks {
-		status := "Не выполнена"
+		fmt.Printf("ID: %d, Title: %s, Priority: %d\n", task.ID, task.Title, task.Priority)
+	}
+}
+func SortTasksByStatus() {
+	tasks, err := repository.SortTasksByStatus()
+	if err != nil {
+		fmt.Println("Ошибка при сортировке задач по статусу:", err)
+		return
+	}
+
+	fmt.Println("Отсортированные задачи по статусу:")
+	for _, task := range tasks {
+		status := "Not Completed"
 		if task.IsDone {
-			status = "Выполнена"
+			status = "Completed"
 		}
-		fmt.Printf("ID: %d, Заголовок: %s, Описание: %s, Статус: %s, Приоритет: %d, Создано: %s\n",
-			task.ID, task.Title, task.Description, status, task.Priority, task.CreatedAt)
+		fmt.Printf("ID: %d, Title: %s, Status: %s\n", task.ID, task.Title, status)
+	}
+}
+func SortTasksByDate() {
+	tasks, err := repository.SortTasksByDate()
+	if err != nil {
+		fmt.Println("Ошибка при сортировке задач по дате:", err)
+		return
+	}
+
+	fmt.Println("Отсортированные задачи по дате:")
+	for _, task := range tasks {
+		fmt.Printf("ID: %d, Title: %s, Created At: %s\n", task.ID, task.Title, task.CreatedAt)
 	}
 }
