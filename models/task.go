@@ -1,13 +1,14 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type Task struct {
-	ID          int
-	Title       string
-	Description string
+	ID          uint   `gorm:"primaryKey"`
+	Title       string `gorm:"type:varchar(100)"`
+	Description string `gorm:"type:text"`
 	IsDone      bool
-	IsDeleted   bool
 	Priority    int
 	CreatedAt   time.Time
 }

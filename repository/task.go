@@ -1,119 +1,67 @@
 package repository
 
 import (
-	"fmt"
 	"todoList/db"
 	"todoList/models"
 )
 
 func AddTask(task models.Task) error {
-	_, err := db.GetDBConn().Exec(db.AddNewTaskQuery, task.Title, task.Description, task.Priority)
+	return db.GetDBConn().Create(&task).Error
+}
+
+func GetAllTasks() ([]models.Task, error) {
+	var tasks []models.Task
+	err := db.GetDBConn().Find(&tasks).Error
+	return tasks, err
+}
+
+func UpdateTask(taskID uint, title, description string) error {
+	return db.GetDBConn().Model(&models.Task{}).Where("id = ?", taskID).Updates(models.Task{Title: title, Description: description}).Error
+}
+
+func ToggleStatus(taskID uint) error {
+	var task models.Task
+	err := db.GetDBConn().First(&task, taskID).Error
 	if err != nil {
 		return err
 	}
-	return nil
+	task.IsDone = !task.IsDone
+	return db.GetDBConn().Save(&task).Error
 }
 
-func GetAllTasks() (tasks []models.Task, err error) {
-	rows, err := db.GetDBConn().Query(db.GetAllTasksQuery)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var task models.Task
-		err = rows.Scan(&task.ID, &task.Title, &task.Description, &task.IsDone, &task.Priority, &task.CreatedAt)
-		if err != nil {
-			return nil, err
-		}
-		tasks = append(tasks, task)
-	}
-	return tasks, nil
+func DeleteTask(taskID uint) error {
+	return db.GetDBConn().Delete(&models.Task{}, taskID).Error
 }
 
-func UpdateTask(taskID int, title, description string) error {
-	_, err := db.GetDBConn().Exec(db.UpdateTaskQuery, title, description, taskID)
-	return err
+func SetPriority(taskID uint, priority int) error {
+	return db.GetDBConn().Model(&models.Task{}).Where("id = ?", taskID).Update("priority", priority).Error
 }
 
-func ToggleStatus(taskID int) error {
-	_, err := db.GetDBConn().Exec(db.ToggleStatusQuery, taskID)
-	return err
+func GetTasksByIsDone(status string) ([]models.Task, error) {
+	var tasks []models.Task
+	isDone := status == "completed"
+	err := db.GetDBConn().Where("is_done = ?", isDone).Find(&tasks).Error
+	return tasks, err
 }
 
-func DeleteTask(taskID int) error {
-	_, err := db.GetDBConn().Exec(db.DeleteTaskQuery, taskID)
-	return err
-}
-
-func SetPriority(taskID int, priority int) error {
-	_, err := db.GetDBConn().Exec(db.SetPriorityQuery, priority, taskID)
-	return err
-}
-
-func GetTasksByIsDone(status string) (tasks []models.Task, err error) {
-	var isDone bool
-	if status == "completed" {
-		isDone = true
-	} else if status == "not completed" {
-		isDone = false
-	} else {
-		return nil, fmt.Errorf("invalid status: %s", status)
-	}
-
-	rows, err := db.GetDBConn().Query(db.GetTasksByIsDoneQuery, isDone)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var task models.Task
-		err = rows.Scan(&task.ID, &task.Title, &task.Description, &task.IsDone, &task.Priority, &task.CreatedAt)
-		if err != nil {
-			return nil, err
-		}
-		tasks = append(tasks, task)
-	}
-	return tasks, nil
-}
-func InsertExistingData() error {
-	_, err := db.GetDBConn().Exec(db.InsertExistingData)
-	if err != nil {
-		return err
-	}
-	return nil
+func InsertExistingData(tasks []models.Task) error {
+	return db.GetDBConn().Create(&tasks).Error
 }
 
 func SortTasksByDate() ([]models.Task, error) {
-	return sortTasks(db.SortByDateQuery)
+	return sortTasks("created_at")
 }
 
 func SortTasksByStatus() ([]models.Task, error) {
-	return sortTasks(db.SortByStatusQuery)
+	return sortTasks("is_done")
 }
 
 func SortTasksByPriority() ([]models.Task, error) {
-	return sortTasks(db.SortByPriorityQuery)
+	return sortTasks("priority")
 }
 
-func sortTasks(query string) ([]models.Task, error) {
-	rows, err := db.GetDBConn().Query(query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
+func sortTasks(orderBy string) ([]models.Task, error) {
 	var tasks []models.Task
-	for rows.Next() {
-		var task models.Task
-		err := rows.Scan(&task.ID, &task.Title, &task.Description, &task.IsDone, &task.Priority, &task.CreatedAt)
-		if err != nil {
-			return nil, err
-		}
-		tasks = append(tasks, task)
-	}
-
-	return tasks, nil
+	err := db.GetDBConn().Order(orderBy).Find(&tasks).Error
+	return tasks, err
 }

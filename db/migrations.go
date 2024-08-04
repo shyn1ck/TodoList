@@ -3,26 +3,19 @@ package db
 import (
 	"errors"
 	"log"
+	"todoList/models"
 )
 
 func Migrate() error {
 	if dbConn == nil {
-		return errors.New("Database connection is not initialized")
+		return errors.New("database connection is not initialized")
 	}
 
-	tx, err := dbConn.Begin()
+	err := dbConn.AutoMigrate(&models.Task{})
 	if err != nil {
-		return errors.New("Failed to begin transaction: " + err.Error())
+		return errors.New("failed to migrate database schema: " + err.Error())
 	}
-	_, err = tx.Exec(CreateTasksTableQuery)
-	if err != nil {
-		tx.Rollback()
-		return errors.New("Failed to create tasks table: " + err.Error())
-	}
-	err = tx.Commit()
-	if err != nil {
-		return errors.New("Failed to commit transaction: " + err.Error())
-	}
+
 	log.Println("Database migration completed successfully")
 	return nil
 }
