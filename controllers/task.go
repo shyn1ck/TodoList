@@ -1,291 +1,230 @@
+// controllers/tasks.go
+
 package controllers
 
 import (
-	"bufio"
+	"encoding/json"
 	"fmt"
-	"os"
+	"net/http"
 	"strconv"
 	"strings"
 	"todoList/models"
 	"todoList/repository"
 )
 
-func AddTask() {
-	var task models.Task
-	reader := bufio.NewReader(os.Stdin)
+func AddTaskHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		var task models.Task
+		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `{"error":"Invalid request body"}`, http.StatusBadRequest)
+			return
+		}
 
-	fmt.Println("Введите заголовок задачи:")
-	title, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("Ошибка при чтении заголовка:", err)
-		return
-	}
-	task.Title = strings.TrimSpace(title)
+		if err := repository.AddTask(task); err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
+			return
+		}
 
-	fmt.Println("Введите описание задачи:")
-	description, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("Ошибка при чтении описания:", err)
-		return
-	}
-	task.Description = strings.TrimSpace(description)
-
-	fmt.Println("Введите приоритет задачи (целое число):")
-	priorityStr, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("Ошибка при чтении приоритета:", err)
-		return
-	}
-	priorityStr = strings.TrimSpace(priorityStr)
-	task.Priority, err = strconv.Atoi(priorityStr)
-	if err != nil {
-		fmt.Println("Ошибка при преобразовании приоритета в целое число:", err)
+		w.WriteHeader(http.StatusCreated)
 		return
 	}
 
-	err = repository.AddTask(task)
-	if err != nil {
-		fmt.Println("Ошибка при добавлении задачи:", err)
-		return
-	}
-
-	fmt.Println("Задача успешно добавлена!")
+	w.Header().Set("Content-Type", "application/json")
+	http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
 }
 
-func GetAllTasks() {
+func GetAllTasksHandler(w http.ResponseWriter, r *http.Request) {
 	tasks, err := repository.GetAllTasks()
 	if err != nil {
-		fmt.Println("Ошибка при получении задач:", err)
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Println("Задачи:")
-	for _, task := range tasks {
-		status := "Не выполнена"
-		if task.IsDone {
-			status = "Выполнена"
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(tasks); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
+		return
+	}
+}
+
+func EditTaskHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPut {
+		var task models.Task
+		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `{"error":"Invalid request body"}`, http.StatusBadRequest)
+			return
 		}
-		fmt.Printf("ID: %d, Заголовок: %s, Описание: %s, Статус: %s, Приоритет: %d, Создано: %s\n",
-			task.ID, task.Title, task.Description, status, task.Priority, task.CreatedAt)
+
+		taskIDStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
+		taskID, err := strconv.Atoi(taskIDStr)
+		if err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `{"error":"Invalid task ID"}`, http.StatusBadRequest)
+			return
+		}
+
+		task.ID = uint(taskID)
+
+		if err := repository.UpdateTask(task.ID, task.Title, task.Description); err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
+}
+
+func ToggleTaskStatusHandler(w http.ResponseWriter, r *http.Request) {
+	taskIDStr := r.URL.Query().Get("id")
+	taskID, err := strconv.Atoi(taskIDStr)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, `{"error":"Invalid task ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := repository.ToggleStatus(uint(taskID)); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
+	taskIDStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
+	taskID, err := strconv.Atoi(taskIDStr)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, `{"error":"Invalid task ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	if err := repository.DeleteTask(uint(taskID)); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func InsertDataTasksHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		tasks := []models.Task{
+			{Title: "Изучить основы Go", Description: "Пройти курс по основам Go на платформе онлайн-обучения", Priority: 1, IsDone: true},
+			{Title: "Сделать домашнее задание по алгоритмам", Description: "Решить задачи по алгоритмам и структурам данных", Priority: 2, IsDone: true},
+			{Title: "Работа с базами данных", Description: "Изучить SQL и ORM для работы с базами данных", Priority: 3},
+			{Title: "Разработка API", Description: "Разработать REST API для учебного проекта", Priority: 2, IsDone: true},
+			{Title: "Прочитать книгу по программированию", Description: "Прочитать книгу 'Чистый код' Роберта Мартина", Priority: 1},
+			{Title: "Участие в хакатоне", Description: "Принять участие в студенческом хакатоне", Priority: 3},
+			{Title: "Создать GitHub репозиторий", Description: "Создать и настроить репозиторий для учебных проектов на GitHub", Priority: 2},
+			{Title: "Установить среду разработки", Description: "Настроить IDE и все необходимые плагины для работы", Priority: 1, IsDone: true},
+			{Title: "Проектирование системы", Description: "Разработать архитектуру системы для учебного проекта", Priority: 3, IsDone: true},
+			{Title: "Учебный проект: веб-приложение", Description: "Создать простое веб-приложение с использованием фреймворка", Priority: 2},
+		}
+
+		if err := repository.InsertExistingData(tasks); err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"message":"Test tasks successfully inserted!"}`))
 	}
 }
 
-func EditTask() {
-	var taskID uint
-	var newTitle, newDescription string
+func SetTaskPriorityHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPatch {
+		var data struct {
+			ID       uint `json:"id"`
+			Priority int  `json:"priority"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `{"error":"Invalid request body"}`, http.StatusBadRequest)
+			return
+		}
 
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("Введите ID задачи для редактирования:")
-	_, err := fmt.Scan(&taskID)
-	if err != nil {
-		fmt.Println("Ошибка при чтении ID задачи:", err)
+		if err := repository.SetPriority(data.ID, data.Priority); err != nil {
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	fmt.Println("Введите новый заголовок:")
-	title, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("Ошибка при чтении нового заголовка:", err)
-		return
-	}
-	newTitle = strings.TrimSpace(title)
-
-	fmt.Println("Введите новое описание:")
-	description, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("Ошибка при чтении нового описания:", err)
-		return
-	}
-	newDescription = strings.TrimSpace(description)
-
-	err = repository.UpdateTask(taskID, newTitle, newDescription)
-	if err != nil {
-		fmt.Println("Ошибка при обновлении задачи:", err)
-		return
-	}
-
-	fmt.Println("Задача успешно обновлена!")
+	w.Header().Set("Content-Type", "application/json")
+	http.Error(w, `{"error":"Method not allowed"}`, http.StatusMethodNotAllowed)
 }
 
-func ToggleTaskStatus() {
-	var taskID uint
+func FilterTasksByIsDoneHandler(w http.ResponseWriter, r *http.Request) {
+	status := strings.ToLower(r.URL.Query().Get("status"))
 
-	fmt.Println("Введите ID задачи для изменения статуса:")
-	_, err := fmt.Scan(&taskID)
-	if err != nil {
-		fmt.Println("Ошибка при чтении ID задачи:", err)
-		return
-	}
-
-	err = repository.ToggleStatus(taskID)
-	if err != nil {
-		fmt.Println("Ошибка при изменении статуса задачи:", err)
-		return
-	}
-
-	fmt.Println("Статус задачи успешно изменен!")
-}
-
-func DeleteTask() {
-	var taskID uint
-
-	fmt.Println("Введите ID задачи для удаления:")
-	_, err := fmt.Scan(&taskID)
-	if err != nil {
-		fmt.Println("Ошибка при чтении ID задачи:", err)
-		return
-	}
-
-	err = repository.DeleteTask(taskID)
-	if err != nil {
-		fmt.Println("Ошибка при удалении задачи:", err)
-		return
-	}
-
-	fmt.Println("Задача успешно удалена!")
-}
-
-func InsertDataTasks() {
-
-	tasks := []models.Task{
-		{Title: "Изучить основы Go", Description: "Пройти курс по основам Go на платформе онлайн-обучения", Priority: 1, IsDone: true},
-		{Title: "Сделать домашнее задание по алгоритмам", Description: "Решить задачи по алгоритмам и структурам данных", Priority: 2, IsDone: true},
-		{Title: "Работа с базами данных", Description: "Изучить SQL и ORM для работы с базами данных", Priority: 3},
-		{Title: "Разработка API", Description: "Разработать REST API для учебного проекта", Priority: 2, IsDone: true},
-		{Title: "Прочитать книгу по программированию", Description: "Прочитать книгу 'Чистый код' Роберта Мартина", Priority: 1},
-		{Title: "Участие в хакатоне", Description: "Принять участие в студенческом хакатоне", Priority: 3},
-		{Title: "Создать GitHub репозиторий", Description: "Создать и настроить репозиторий для учебных проектов на GitHub", Priority: 2},
-		{Title: "Установить среду разработки", Description: "Настроить IDE и все необходимые плагины для работы", Priority: 1, IsDone: true},
-		{Title: "Проектирование системы", Description: "Разработать архитектуру системы для учебного проекта", Priority: 3, IsDone: true},
-		{Title: "Учебный проект: веб-приложение", Description: "Создать простое веб-приложение с использованием фреймворка", Priority: 2},
-	}
-
-	err := repository.InsertExistingData(tasks)
-	if err != nil {
-		fmt.Println("Ошибка при вставке тестовых задач:", err)
-		return
-	}
-	fmt.Println("Тестовые задачи успешно вставлены!")
-}
-
-func SetTaskPriority() {
-	var taskID uint
-	var priority int
-
-	fmt.Println("Введите ID задачи для установки приоритета:")
-	_, err := fmt.Scan(&taskID)
-	if err != nil {
-		fmt.Println("Ошибка при чтении ID задачи:", err)
-		return
-	}
-
-	fmt.Println("Введите уровень приоритета (1-5):")
-	_, err = fmt.Scan(&priority)
-	if err != nil {
-		fmt.Println("Ошибка при чтении уровня приоритета:", err)
-		return
-	}
-
-	err = repository.SetPriority(taskID, priority)
-	if err != nil {
-		fmt.Println("Ошибка при установке приоритета задачи:", err)
-		return
-	}
-
-	fmt.Println("Приоритет задачи успешно установлен!")
-}
-
-func FilterTasksByIsDone() {
-	var status string
-
-	fmt.Println("Введите статус для фильтрации (выполнена/не выполнена):")
-	_, err := fmt.Scan(&status)
-	if err != nil {
-		fmt.Println("Ошибка при чтении статуса:", err)
-		return
-	}
-
-	status = strings.ToLower(status)
-	if status != "выполнена" && status != "не выполнена" {
-		fmt.Println("Недопустимый статус. Пожалуйста, введите 'выполнена' или 'не выполнена'.")
+	if status != "completed" && status != "not completed" {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, `{"error":"Invalid status"}`, http.StatusBadRequest)
 		return
 	}
 
 	tasks, err := repository.GetTasksByIsDone(status)
 	if err != nil {
-		fmt.Println("Ошибка при фильтрации задач:", err)
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Println("Отфильтрованные задачи:")
-	for _, task := range tasks {
-		status := "Не выполнена"
-		if task.IsDone {
-			status = "Выполнена"
-		}
-		fmt.Printf("ID: %d, Заголовок: %s, Описание: %s, Статус: %s, Приоритет: %d, Создано: %s\n",
-			task.ID, task.Title, task.Description, status, task.Priority, task.CreatedAt)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(tasks); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
+		return
 	}
 }
 
-func SortTasks() {
-	var sortOption string
+func SortTasksHandler(w http.ResponseWriter, r *http.Request) {
+	sortOption := strings.ToLower(r.URL.Query().Get("option"))
 
-	fmt.Println("Введите опцию сортировки (date/status/priority):")
-	_, err := fmt.Scan(&sortOption)
-	if err != nil {
-		fmt.Println("Ошибка при чтении опции сортировки:", err)
-		return
-	}
+	var tasks []models.Task
+	var err error
 
-	switch strings.ToLower(sortOption) {
+	switch sortOption {
 	case "date":
-		SortTasksByDate()
+		tasks, err = repository.SortTasksByDate()
 	case "status":
-		SortTasksByStatus()
+		tasks, err = repository.SortTasksByStatus()
 	case "priority":
-		SortTasksByPriority()
+		tasks, err = repository.SortTasksByPriority()
 	default:
-		fmt.Println("Неверная опция сортировки. Используйте 'date', 'status' или 'priority'.")
-	}
-}
-func SortTasksByPriority() {
-	tasks, err := repository.SortTasksByPriority()
-	if err != nil {
-		fmt.Println("Ошибка при сортировке задач по приоритету:", err)
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, `{"error":"Invalid sort option"}`, http.StatusBadRequest)
 		return
 	}
 
-	fmt.Println("Отсортированные задачи по приоритету:")
-	for _, task := range tasks {
-		fmt.Printf("ID: %d, Title: %s, Priority: %d\n", task.ID, task.Title, task.Priority)
-	}
-}
-func SortTasksByStatus() {
-	tasks, err := repository.SortTasksByStatus()
 	if err != nil {
-		fmt.Println("Ошибка при сортировке задач по статусу:", err)
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Println("Отсортированные задачи по статусу:")
-	for _, task := range tasks {
-		status := "Not Completed"
-		if task.IsDone {
-			status = "Completed"
-		}
-		fmt.Printf("ID: %d, Title: %s, Status: %s\n", task.ID, task.Title, status)
-	}
-}
-func SortTasksByDate() {
-	tasks, err := repository.SortTasksByDate()
-	if err != nil {
-		fmt.Println("Ошибка при сортировке задач по дате:", err)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(tasks); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, fmt.Sprintf(`{"error":"%s"}`, err.Error()), http.StatusInternalServerError)
 		return
-	}
-
-	fmt.Println("Отсортированные задачи по дате:")
-	for _, task := range tasks {
-		fmt.Printf("ID: %d, Title: %s, Created At: %s\n", task.ID, task.Title, task.CreatedAt)
 	}
 }

@@ -6,62 +6,72 @@ import (
 )
 
 func AddTask(task models.Task) error {
-	return db.GetDBConn().Create(&task).Error
+	result := db.GetDBConn().Create(&task)
+	return result.Error
 }
 
 func GetAllTasks() ([]models.Task, error) {
 	var tasks []models.Task
-	err := db.GetDBConn().Find(&tasks).Error
-	return tasks, err
+	result := db.GetDBConn().Find(&tasks)
+	return tasks, result.Error
 }
 
 func UpdateTask(taskID uint, title, description string) error {
-	return db.GetDBConn().Model(&models.Task{}).Where("id = ?", taskID).Updates(models.Task{Title: title, Description: description}).Error
+	var task models.Task
+	result := db.GetDBConn().Model(&task).Where(
+		"id = ?", taskID).Updates(models.Task{Title: title, Description: description})
+	return result.Error
 }
 
 func ToggleStatus(taskID uint) error {
 	var task models.Task
-	err := db.GetDBConn().First(&task, taskID).Error
-	if err != nil {
-		return err
-	}
-	task.IsDone = !task.IsDone
-	return db.GetDBConn().Save(&task).Error
+	result := db.GetDBConn().Model(&task).Where(
+		"id = ?", taskID).Update("IsDone", !task.IsDone)
+	return result.Error
 }
 
 func DeleteTask(taskID uint) error {
-	return db.GetDBConn().Delete(&models.Task{}, taskID).Error
+	result := db.GetDBConn().Delete(&models.Task{}, taskID)
+	return result.Error
+}
+
+func InsertExistingData(tasks []models.Task) error {
+	for _, task := range tasks {
+		result := db.GetDBConn().Create(&task)
+		if result.Error != nil {
+			return result.Error
+		}
+	}
+	return nil
 }
 
 func SetPriority(taskID uint, priority int) error {
-	return db.GetDBConn().Model(&models.Task{}).Where("id = ?", taskID).Update("priority", priority).Error
+	var task models.Task
+	result := db.GetDBConn().Model(&task).Where(
+		"id = ?", taskID).Update("Priority", priority)
+	return result.Error
 }
 
 func GetTasksByIsDone(status string) ([]models.Task, error) {
 	var tasks []models.Task
-	isDone := status == "completed"
-	err := db.GetDBConn().Where("is_done = ?", isDone).Find(&tasks).Error
-	return tasks, err
-}
-
-func InsertExistingData(tasks []models.Task) error {
-	return db.GetDBConn().Create(&tasks).Error
+	result := db.GetDBConn().Where("IsDone = ?", status == "completed").Find(&tasks)
+	return tasks, result.Error
 }
 
 func SortTasksByDate() ([]models.Task, error) {
-	return sortTasks("created_at")
+	var tasks []models.Task
+	result := db.GetDBConn().Order("CreatedAt").Find(&tasks)
+	return tasks, result.Error
 }
 
 func SortTasksByStatus() ([]models.Task, error) {
-	return sortTasks("is_done")
+	var tasks []models.Task
+	result := db.GetDBConn().Order("IsDone").Find(&tasks)
+	return tasks, result.Error
 }
 
 func SortTasksByPriority() ([]models.Task, error) {
-	return sortTasks("priority")
-}
-
-func sortTasks(orderBy string) ([]models.Task, error) {
 	var tasks []models.Task
-	err := db.GetDBConn().Order(orderBy).Find(&tasks).Error
-	return tasks, err
+	result := db.GetDBConn().Order("Priority").Find(&tasks)
+	return tasks, result.Error
 }

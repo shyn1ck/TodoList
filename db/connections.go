@@ -9,7 +9,7 @@ import (
 var dbConn *gorm.DB
 
 func ConnectToDB() error {
-	connStr := "user=postgres password=2003 dbname=todo_list_db sslmode=disable"
+	connStr := "user=postgres password=2003 dbname=postgres sslmode=disable"
 	db, err := gorm.Open(postgres.Open(connStr), &gorm.Config{})
 	if err != nil {
 		return err
