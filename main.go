@@ -31,8 +31,8 @@ func main() {
 	http.HandleFunc("/tasks/filter", TaskHandler)    //  Фильтрация  по  статусу
 	http.HandleFunc("/tasks/sort", TaskHandler)      //  Сортировка
 
-	log.Println("Starting server on :63342")
-	if err := http.ListenAndServe(":63342", nil); err != nil {
+	log.Println("Starting server on http://localhost:8080")
+	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
