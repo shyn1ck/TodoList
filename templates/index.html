@@ -104,23 +104,23 @@
                 }
 
                 let taskHTML = `
-            <div class="${taskClass} ${priorityClass}" data-task-id="${task.ID}">
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="task-${task.ID}" ${task.IsDone ? "checked" : ""}>
-                <label class="form-check-label" for="task-${task.ID}">${task.Title}</label>
-              </div>
-              <p>${task.Description}</p>
-              <div class="task-actions">
-                <button class="btn btn-sm btn-primary edit-task" data-task-id="${task.ID}">Изменить</button>
-                <button class="btn btn-sm btn-danger delete-task" data-task-id="${task.ID}">Удалить</button>
-                <select class="form-control priority-select" data-task-id="${task.ID}">
-                  <option value="1" ${task.Priority === 1 ? "selected" : ""}>Высокий</option>
-                  <option value="2" ${task.Priority === 2 ? "selected" : ""}>Средний</option>
-                  <option value="3" ${task.Priority === 3 ? "selected" : ""}>Низкий</option>
-                </select>
-              </div>
-            </div>
-          `;
+                    <div class="${taskClass} ${priorityClass}" data-task-id="${task.ID}">
+                      <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="task-${task.ID}" ${task.IsDone ? "checked" : ""}>
+                        <label class="form-check-label" for="task-${task.ID}">${task.Title}</label>
+                      </div>
+                      <p>${task.Description}</p>
+                      <div class="task-actions">
+                        <button class="btn btn-sm btn-primary edit-task" data-task-id="${task.ID}">Изменить</button>
+                        <button class="btn btn-sm btn-danger delete-task" data-task-id="${task.ID}">Удалить</button>
+                        <select class="form-control priority-select" data-task-id="${task.ID}">
+                          <option value="1" ${task.Priority === 1 ? "selected" : ""}>Высокий</option>
+                          <option value="2" ${task.Priority === 2 ? "selected" : ""}>Средний</option>
+                          <option value="3" ${task.Priority === 3 ? "selected" : ""}>Низкий</option>
+                        </select>
+                      </div>
+                    </div>
+                `;
                 $("#task-list").append(taskHTML);
             });
         }
@@ -132,8 +132,8 @@
                 url += `?status=${filterStatus}`;
             }
 
-            if (sortOption) {
-                url += `&option=${sortOption}`;
+            if (sortOption && sortOption !== "none") {
+                url += filterStatus ? `&sort=${sortOption}` : `?sort=${sortOption}`;
             }
 
             $.ajax({
@@ -202,32 +202,10 @@
             });
         }
 
-        function updateTask(taskID, title, description, priority) {
-            let taskData = {
-                ID: taskID,
-                Title: title,
-                Description: description,
-                Priority: parseInt(priority)
-            };
-
-            $.ajax({
-                url: `/api/tasks/${taskID}`,
-                type: "PUT",
-                data: JSON.stringify(taskData),
-                contentType: "application/json",
-                success: function() {
-                    getTasks();
-                },
-                error: function(error) {
-                    console.error("Ошибка обновления задачи:", error);
-                }
-            });
-        }
-
         function setTaskPriority(taskID, priority) {
             $.ajax({
                 url: `/api/tasks/priority`,
-                type: "PUT", // Изменили с PATCH на PUT
+                type: "PUT",
                 data: JSON.stringify({
                     ID: taskID,
                     Priority: parseInt(priority)
@@ -243,14 +221,16 @@
         }
 
         $("#add-task").click(addTask);
-        $("#refresh-tasks").click(getTasks);
+        $("#refresh-tasks").click(function() {
+            getTasks();
+        });
 
         $("#filter-completed").click(function() {
             getTasks("completed");
         });
 
         $("#filter-not-completed").click(function() {
-            getTasks("not completed");
+            getTasks("not_completed");
         });
 
         $("#filter-all").click(function() {
@@ -262,23 +242,23 @@
             getTasks(null, sortOption);
         });
 
-        $("#task-list").on("click", ".form-check-input", function() {
-            let taskID = $(this).closest(".task").data("taskId");
+        $("#task-list").on("click", "input[type=checkbox]", function() {
+            let taskID = $(this).closest(".task").data("task-id");
             toggleTaskStatus(taskID);
         });
 
         $("#task-list").on("click", ".delete-task", function() {
-            let taskID = $(this).data("taskId");
+            let taskID = $(this).data("task-id");
             deleteTask(taskID);
         });
 
         $("#task-list").on("change", ".priority-select", function() {
-            let taskID = $(this).data("taskId");
+            let taskID = $(this).data("task-id");
             let priority = $(this).val();
             setTaskPriority(taskID, priority);
         });
 
-        getTasks(); // Начальная загрузка задач
+        getTasks(); // Загружаем задачи при первой загрузке страницы
     });
 </script>
 </body>

@@ -8,6 +8,13 @@ import (
 	"todoList/db"
 )
 
+func setHeaders(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+}
+
 func main() {
 	if err := db.ConnectToDB(); err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -23,13 +30,14 @@ func main() {
 	}
 
 	// Задаем маршруты для API
-	http.HandleFunc("/tasks", TaskHandler)           //  Обработка  всех  задач
-	http.HandleFunc("/tasks/", TaskHandler)          //  Обработка  задач  по  ID
-	http.HandleFunc("/tasks/toggle", TaskHandler)    //  Переключение  статуса
-	http.HandleFunc("/tasks/priority", TaskHandler)  //  Изменение  приоритета
-	http.HandleFunc("/tasks/test-data", TaskHandler) //  Вставка  тестовых  данных
-	http.HandleFunc("/tasks/filter", TaskHandler)    //  Фильтрация  по  статусу
-	http.HandleFunc("/tasks/sort", TaskHandler)      //  Сортировка
+	http.HandleFunc("/", controllers.IndexHandler)
+	http.HandleFunc("/api/tasks", TaskHandler)           //  Обработка  всех  задач
+	http.HandleFunc("/api/tasks/", TaskHandler)          //  Обработка  задач  по  ID
+	http.HandleFunc("/api/tasks/toggle", TaskHandler)    //  Переключение  статуса
+	http.HandleFunc("/api/tasks/priority", TaskHandler)  //  Изменение  приоритета
+	http.HandleFunc("/api/tasks/test-data", TaskHandler) //  Вставка  тестовых  данных
+	http.HandleFunc("/api/tasks/filter", TaskHandler)    //  Фильтрация  по  статусу
+	http.HandleFunc("/api/tasks/sort", TaskHandler)      //  Сортировка
 
 	log.Println("Starting server on http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
@@ -40,6 +48,7 @@ func main() {
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		setHeaders(w)
 		switch {
 		case strings.HasPrefix(r.URL.Path, "/tasks/filter"):
 			controllers.FilterTasksByIsDoneHandler(w, r)
@@ -49,6 +58,7 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 			controllers.GetAllTasksHandler(w, r)
 		}
 	case http.MethodPost:
+		setHeaders(w)
 		switch {
 		case strings.HasPrefix(r.URL.Path, "/tasks/test-data"):
 			controllers.InsertDataTasksHandler(w, r)
@@ -56,6 +66,7 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 			controllers.AddTaskHandler(w, r)
 		}
 	case http.MethodPut:
+		setHeaders(w)
 		pathParts := strings.Split(r.URL.Path, "/")
 		if len(pathParts) > 2 && pathParts[1] == "tasks" {
 			if pathParts[2] == "toggle" {
@@ -69,6 +80,7 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Not Found", http.StatusNotFound)
 		}
 	case http.MethodDelete:
+		setHeaders(w)
 		if strings.HasPrefix(r.URL.Path, "/tasks/") && !strings.Contains(r.URL.Path,
 			"/toggle") && !strings.Contains(r.URL.Path,
 			"/priority") {
