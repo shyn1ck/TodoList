@@ -22,14 +22,13 @@ func main() {
 		log.Fatalf("Failed to run database migrations: %v", err)
 	}
 
-	// Задаем маршруты для API
-	http.HandleFunc("/tasks", TaskHandler)           //  Обработка  всех  задач
-	http.HandleFunc("/tasks/", TaskHandler)          //  Обработка  задач  по  ID
-	http.HandleFunc("/tasks/toggle", TaskHandler)    //  Переключение  статуса
-	http.HandleFunc("/tasks/priority", TaskHandler)  //  Изменение  приоритета
-	http.HandleFunc("/tasks/test-data", TaskHandler) //  Вставка  тестовых  данных
-	http.HandleFunc("/tasks/filter", TaskHandler)    //  Фильтрация  по  статусу
-	http.HandleFunc("/tasks/sort", TaskHandler)      //  Сортировка
+	http.HandleFunc("/tasks", TaskHandler)
+	http.HandleFunc("/tasks/", TaskHandler)
+	http.HandleFunc("/tasks/toggle", TaskHandler)
+	http.HandleFunc("/tasks/priority", TaskHandler)
+	http.HandleFunc("/tasks/test-data", TaskHandler)
+	http.HandleFunc("/tasks/filter", TaskHandler)
+	http.HandleFunc("/tasks/sort", TaskHandler)
 
 	log.Println("Starting server on http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
@@ -38,6 +37,7 @@ func main() {
 }
 
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	switch r.Method {
 	case http.MethodGet:
 		switch {
@@ -47,36 +47,41 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 			controllers.SortTasksHandler(w, r)
 		default:
 			controllers.GetAllTasksHandler(w, r)
+			w.Write([]byte(`{"message":"Tasks retrieved successfully"}`))
 		}
 	case http.MethodPost:
 		switch {
 		case strings.HasPrefix(r.URL.Path, "/tasks/test-data"):
 			controllers.InsertDataTasksHandler(w, r)
+			w.Write([]byte(`{"message":"Test data inserted successfully"}`))
 		default:
 			controllers.AddTaskHandler(w, r)
+			w.Write([]byte(`{"message":"Task added successfully"}`))
 		}
 	case http.MethodPut:
 		pathParts := strings.Split(r.URL.Path, "/")
 		if len(pathParts) > 2 && pathParts[1] == "tasks" {
 			if pathParts[2] == "toggle" {
 				controllers.ToggleTaskStatusHandler(w, r)
+				w.Write([]byte(`{"message":"Task status toggled successfully"}`))
 			} else if pathParts[2] == "priority" {
 				controllers.SetTaskPriorityHandler(w, r)
+				w.Write([]byte(`{"message":"Task priority set successfully"}`))
 			} else {
 				controllers.EditTaskHandler(w, r)
+				w.Write([]byte(`{"message":"Task edited successfully"}`))
 			}
 		} else {
-			http.Error(w, "Not Found", http.StatusNotFound)
+			http.Error(w, `{"error":"Not Found"}`, http.StatusNotFound)
 		}
 	case http.MethodDelete:
-		if strings.HasPrefix(r.URL.Path, "/tasks/") && !strings.Contains(r.URL.Path,
-			"/toggle") && !strings.Contains(r.URL.Path,
-			"/priority") {
+		if strings.HasPrefix(r.URL.Path, "/tasks/") && !strings.Contains(r.URL.Path, "/toggle") && !strings.Contains(r.URL.Path, "/priority") {
 			controllers.DeleteTaskHandler(w, r)
+			w.Write([]byte(`{"message":"Task deleted successfully"}`))
 		} else {
-			http.Error(w, "Not Found", http.StatusNotFound)
+			http.Error(w, `{"error":"Not Found"}`, http.StatusNotFound)
 		}
 	default:
-		http.Error(w, "Unsupported method", http.StatusMethodNotAllowed)
+		http.Error(w, `{"error":"Unsupported method"}`, http.StatusMethodNotAllowed)
 	}
 }

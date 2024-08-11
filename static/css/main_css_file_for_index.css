@@ -1,0 +1,96 @@
+.container {
+  width: 500px;
+  margin: 50px auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-family: sans-serif;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.input-area {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+#taskInput {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  margin-right: 10px;
+}
+
+#addTaskBtn {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.filter-sort {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+#filterSelect, #sortSelect {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+#taskList {
+  list-style: none;
+  padding: 0;
+}
+
+#taskList li {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-checkbox {
+  margin-right: 10px;
+}
+
+.task-content {
+  flex-grow: 1;
+}
+
+.task-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.edit-btn,
+.delete-btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.edit-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.completed {
+  text-decoration: line-through;
+  color: gray;
+}

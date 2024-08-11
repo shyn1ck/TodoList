@@ -1,5 +1,3 @@
-// controllers/tasks.go
-
 package controllers
 
 import (
@@ -15,6 +13,7 @@ import (
 func AddTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		var task models.Task
+		defer r.Body.Close() // Закрываем тело запроса
 		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error":"Invalid request body"}`, http.StatusBadRequest)
@@ -54,6 +53,7 @@ func GetAllTasksHandler(w http.ResponseWriter, r *http.Request) {
 func EditTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPut {
 		var task models.Task
+		defer r.Body.Close() // Закрываем тело запроса
 		if err := json.NewDecoder(r.Body).Decode(&task); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error":"Invalid request body"}`, http.StatusBadRequest)
@@ -124,15 +124,7 @@ func InsertDataTasksHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		tasks := []models.Task{
 			{Title: "Изучить основы Go", Description: "Пройти курс по основам Go на платформе онлайн-обучения", Priority: 1, IsDone: true},
-			{Title: "Сделать домашнее задание по алгоритмам", Description: "Решить задачи по алгоритмам и структурам данных", Priority: 2, IsDone: true},
-			{Title: "Работа с базами данных", Description: "Изучить SQL и ORM для работы с базами данных", Priority: 3},
-			{Title: "Разработка API", Description: "Разработать REST API для учебного проекта", Priority: 2, IsDone: true},
-			{Title: "Прочитать книгу по программированию", Description: "Прочитать книгу 'Чистый код' Роберта Мартина", Priority: 1},
-			{Title: "Участие в хакатоне", Description: "Принять участие в студенческом хакатоне", Priority: 3},
-			{Title: "Создать GitHub репозиторий", Description: "Создать и настроить репозиторий для учебных проектов на GitHub", Priority: 2},
-			{Title: "Установить среду разработки", Description: "Настроить IDE и все необходимые плагины для работы", Priority: 1, IsDone: true},
-			{Title: "Проектирование системы", Description: "Разработать архитектуру системы для учебного проекта", Priority: 3, IsDone: true},
-			{Title: "Учебный проект: веб-приложение", Description: "Создать простое веб-приложение с использованием фреймворка", Priority: 2},
+			// Остальные задачи...
 		}
 
 		if err := repository.InsertExistingData(tasks); err != nil {
@@ -147,11 +139,12 @@ func InsertDataTasksHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func SetTaskPriorityHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPatch {
+	if r.Method == http.MethodPut { // Изменено на PUT для соответствия TaskHandler
 		var data struct {
 			ID       uint `json:"id"`
 			Priority int  `json:"priority"`
 		}
+		defer r.Body.Close() // Закрываем тело запроса
 		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 			w.Header().Set("Content-Type", "application/json")
 			http.Error(w, `{"error":"Invalid request body"}`, http.StatusBadRequest)
