@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"log"
-	"net/http"
-	"strings"
+	"time"
 	"todoList/controllers"
 	"todoList/db"
 )
@@ -22,66 +24,28 @@ func main() {
 		log.Fatalf("Failed to run database migrations: %v", err)
 	}
 
-	http.HandleFunc("/tasks", TaskHandler)
-	http.HandleFunc("/tasks/", TaskHandler)
-	http.HandleFunc("/tasks/toggle", TaskHandler)
-	http.HandleFunc("/tasks/priority", TaskHandler)
-	http.HandleFunc("/tasks/test-data", TaskHandler)
-	http.HandleFunc("/tasks/filter", TaskHandler)
-	http.HandleFunc("/tasks/sort", TaskHandler)
+	router := gin.Default()
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:63342/TodoList/template/"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE"}
+	config.AllowHeaders = []string{"Origin", "Content-Type"}
+	config.ExposeHeaders = []string{"Content-Length"}
+	config.AllowCredentials = true
+	config.MaxAge = 12 * time.Hour
 
-	log.Println("Starting server on http://localhost:8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	router.Use(cors.New(config))
+	router.GET("/tasks", controllers.GetAllTasksHandler)
+	router.POST("/tasks", controllers.AddTaskHandler)
+	router.PUT("/tasks/:id", controllers.EditTaskHandler)
+	router.DELETE("/tasks/:id", controllers.DeleteTaskHandler)
+	router.GET("/tasks/filter", controllers.FilterTasksByIsDoneHandler)
+	router.GET("/tasks/sort", controllers.SortTasksHandler)
+	router.POST("/tasks/test-data", controllers.InsertDataTasksHandler)
+	router.PUT("/tasks/:id/toggle", controllers.ToggleTaskStatusHandler)
+	router.PUT("/tasks/:id/priority", controllers.SetTaskPriorityHandler)
+	port := 8080
+	fmt.Printf("Server started on port %d\n", port)
+	if err := router.Run(fmt.Sprintf(":%d", port)); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
-	}
-}
-
-func TaskHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	switch r.Method {
-	case http.MethodGet:
-		switch {
-		case strings.HasPrefix(r.URL.Path, "/tasks/filter"):
-			controllers.FilterTasksByIsDoneHandler(w, r)
-		case strings.HasPrefix(r.URL.Path, "/tasks/sort"):
-			controllers.SortTasksHandler(w, r)
-		default:
-			controllers.GetAllTasksHandler(w, r)
-			w.Write([]byte(`{"message":"Tasks retrieved successfully"}`))
-		}
-	case http.MethodPost:
-		switch {
-		case strings.HasPrefix(r.URL.Path, "/tasks/test-data"):
-			controllers.InsertDataTasksHandler(w, r)
-			w.Write([]byte(`{"message":"Test data inserted successfully"}`))
-		default:
-			controllers.AddTaskHandler(w, r)
-			w.Write([]byte(`{"message":"Task added successfully"}`))
-		}
-	case http.MethodPut:
-		pathParts := strings.Split(r.URL.Path, "/")
-		if len(pathParts) > 2 && pathParts[1] == "tasks" {
-			if pathParts[2] == "toggle" {
-				controllers.ToggleTaskStatusHandler(w, r)
-				w.Write([]byte(`{"message":"Task status toggled successfully"}`))
-			} else if pathParts[2] == "priority" {
-				controllers.SetTaskPriorityHandler(w, r)
-				w.Write([]byte(`{"message":"Task priority set successfully"}`))
-			} else {
-				controllers.EditTaskHandler(w, r)
-				w.Write([]byte(`{"message":"Task edited successfully"}`))
-			}
-		} else {
-			http.Error(w, `{"error":"Not Found"}`, http.StatusNotFound)
-		}
-	case http.MethodDelete:
-		if strings.HasPrefix(r.URL.Path, "/tasks/") && !strings.Contains(r.URL.Path, "/toggle") && !strings.Contains(r.URL.Path, "/priority") {
-			controllers.DeleteTaskHandler(w, r)
-			w.Write([]byte(`{"message":"Task deleted successfully"}`))
-		} else {
-			http.Error(w, `{"error":"Not Found"}`, http.StatusNotFound)
-		}
-	default:
-		http.Error(w, `{"error":"Unsupported method"}`, http.StatusMethodNotAllowed)
 	}
 }
