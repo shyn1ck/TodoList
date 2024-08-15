@@ -5,15 +5,25 @@ import (
 	"todoList/models"
 )
 
+func GetAllTasks() (tasks []models.Task, err error) {
+	err = db.GetDBConn().Where("is_deleted = ?", false).Find(&tasks).Error
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+}
+
+func GetTaskById(id uint) (task models.Task, err error) {
+	err = db.GetDBConn().Where("id = ?", id).First(&task).Error
+	if err != nil {
+		return task, err
+	}
+	return task, nil
+}
+
 func AddTask(task models.Task) error {
 	result := db.GetDBConn().Create(&task)
 	return result.Error
-}
-
-func GetAllTasks() ([]models.Task, error) {
-	var tasks []models.Task
-	result := db.GetDBConn().Find(&tasks)
-	return tasks, result.Error
 }
 
 func UpdateTask(taskID uint, title, description string) error {
@@ -30,8 +40,9 @@ func ToggleStatus(taskID uint) error {
 	return result.Error
 }
 
-func DeleteTask(taskID uint) error {
-	result := db.GetDBConn().Delete(&models.Task{}, taskID)
+func DeleteTask(id uint) error {
+	var task models.Task
+	result := db.GetDBConn().Model(&task).Where("id = ?", id).Update("is_deleted", true)
 	return result.Error
 }
 
@@ -54,19 +65,19 @@ func SetPriority(taskID uint, priority int) error {
 
 func GetTasksByIsDone(status string) ([]models.Task, error) {
 	var tasks []models.Task
-	result := db.GetDBConn().Where("IsDone = ?", status == "completed").Find(&tasks)
+	result := db.GetDBConn().Where("is_done = ?", status == "completed").Find(&tasks)
 	return tasks, result.Error
 }
 
 func SortTasksByDate() ([]models.Task, error) {
 	var tasks []models.Task
-	result := db.GetDBConn().Order("CreatedAt").Find(&tasks)
+	result := db.GetDBConn().Order("created_at").Find(&tasks)
 	return tasks, result.Error
 }
 
 func SortTasksByStatus() ([]models.Task, error) {
 	var tasks []models.Task
-	result := db.GetDBConn().Order("IsDone").Find(&tasks)
+	result := db.GetDBConn().Order("is_done").Find(&tasks)
 	return tasks, result.Error
 }
 
