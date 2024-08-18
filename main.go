@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"log"
 	"todoList/db"
+	"todoList/logger"
 	"todoList/pkg/controllers"
 )
 
 func main() {
+	err := logger.Init()
+	if err != nil {
+		return
+	}
 	if err := db.ConnectToDB(); err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
@@ -22,7 +27,7 @@ func main() {
 	}
 
 	fmt.Printf("Server started on port %d\n", 8181)
-	err := controllers.RunRoutes()
+	err = controllers.RunRoutes()
 	if err != nil {
 		log.Fatal(err)
 	}
