@@ -9,7 +9,14 @@ func RunRoutes() error {
 	r := gin.Default()
 	r.GET("/ping", PingPong)
 
+	auth := r.Group("/auth")
+	{
+		auth.POST("/sign-up", SignUp)
+		auth.POST("/sign-in", SignIn)
+	}
+
 	userGroup := r.Group("/users")
+	userGroup.Use(checkUserAuthentication)
 	{
 		userGroup.GET("/", GetAllUsers)
 		userGroup.GET("/:id", GetUserByID)
@@ -17,7 +24,9 @@ func RunRoutes() error {
 		userGroup.PUT("/:id", UpdateUser)
 		userGroup.DELETE("/:id", DeleteUser)
 	}
+
 	taskGroup := r.Group("/tasks")
+	taskGroup.Use(checkUserAuthentication)
 	{
 		taskGroup.GET("/", GetAllTasks)
 		taskGroup.GET("/:id", GetTaskByID)

@@ -3,10 +3,10 @@ package controllers
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-	"log"
+	"github.com/jinzhu/gorm"
 	"net/http"
 	"strconv"
+	"todoList/logger"
 	"todoList/models"
 	"todoList/pkg/repository"
 	"todoList/pkg/service"
@@ -14,27 +14,29 @@ import (
 )
 
 func GetAllUsers(c *gin.Context) {
-	log.Println("controllers.GetAllUsers: Received request to get all users")
+	clientIP := c.ClientIP()
+	logger.Info.Printf("[controllers.GetAllUsers]: Received request to get all users from IP: %s", clientIP)
+
 	users, err := service.GetAllUsers()
 	if err != nil {
-		log.Printf("controllers.GetAllUsers: Failed to retrieve users, error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	log.Println("controllers.GetAllUsers: Users retrieved successfully")
+	logger.Info.Printf("[controllers.GetAllUsers]: Users retrieved successfully from IP: %s", clientIP)
 	c.JSON(http.StatusOK, gin.H{
 		"users": users,
 	})
 }
 
 func GetUserByID(c *gin.Context) {
-	log.Println("controllers.GetUserByID: Received request to get user by ID")
+	clientIP := c.ClientIP()
+	logger.Info.Printf("[controllers.GetUserByID]: Received request to get user by ID from IP: %s", clientIP)
+
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		log.Printf("controllers.GetUserByID: Invalid user ID, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "invalid id",
 		})
@@ -43,22 +45,22 @@ func GetUserByID(c *gin.Context) {
 
 	user, err := service.GetUserById(uint(id))
 	if err != nil {
-		log.Printf("controllers.GetUserByID: Failed to retrieve user, ID: %v, error: %v\n", id, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	log.Printf("controllers.GetUserByID: User retrieved successfully, ID: %v\n", id)
+	logger.Info.Printf("[controllers.GetUserByID]: User retrieved successfully from IP: %s, ID: %v", clientIP, id)
 	c.JSON(http.StatusOK, user)
 }
 
 func CreateUser(c *gin.Context) {
-	log.Println("controllers.CreateUser: Received request to create a new user")
+	clientIP := c.ClientIP()
+	logger.Info.Printf("[controllers.CreateUser]: Received request to create a new user from IP: %s", clientIP)
+
 	var user models.User
 	if err := c.BindJSON(&user); err != nil {
-		log.Printf("controllers.CreateUser: Failed to bind JSON, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
@@ -67,24 +69,24 @@ func CreateUser(c *gin.Context) {
 
 	err := service.CreateUser(user)
 	if err != nil {
-		log.Printf("controllers.CreateUser: Failed to create user, error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
 
-	log.Println("controllers.CreateUser: User created successfully")
+	logger.Info.Printf("[controllers.CreateUser]: User created successfully from IP: %s", clientIP)
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "user created successfully",
 	})
 }
 
 func UpdateUser(c *gin.Context) {
-	log.Println("controllers.UpdateUser: Received request to update a user")
+	clientIP := c.ClientIP()
+	logger.Info.Printf("[controllers.UpdateUser]: Received request to update a user from IP: %s", clientIP)
+
 	var user models.User
 	if err := c.ShouldBindJSON(&user); err != nil {
-		log.Printf("controllers.UpdateUser: Failed to bind JSON, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -92,7 +94,6 @@ func UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		log.Printf("controllers.UpdateUser: Invalid user ID, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
 		return
 	}
@@ -100,11 +101,9 @@ func UpdateUser(c *gin.Context) {
 	existingUser, err := repository.GetUserByID(uint(id))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Printf("controllers.UpdateUser: User not found, ID: %v\n", id)
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
-		log.Printf("controllers.UpdateUser: Failed to retrieve user, ID: %v, error: %v\n", id, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -118,32 +117,31 @@ func UpdateUser(c *gin.Context) {
 
 	err = repository.UpdateUser(existingUser)
 	if err != nil {
-		log.Printf("controllers.UpdateUser: Failed to update user, ID: %v, error: %v\n", id, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	log.Printf("controllers.UpdateUser: User updated successfully, ID: %v\n", id)
+	logger.Info.Printf("[controllers.UpdateUser]: User updated successfully from IP: %s, ID: %v", clientIP, id)
 	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
 }
 
 func DeleteUser(c *gin.Context) {
-	log.Println("controllers.DeleteUser: Received request to delete a user")
+	clientIP := c.ClientIP()
+	logger.Info.Printf("[controllers.DeleteUser]: Received request to delete a user from IP: %s", clientIP)
+
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		log.Printf("controllers.DeleteUser: Invalid user ID, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 		return
 	}
 
 	err = service.DeleteUser(uint(id))
 	if err != nil {
-		log.Printf("controllers.DeleteUser: Failed to delete user, ID: %v, error: %v\n", id, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	log.Printf("controllers.DeleteUser: User deleted successfully, ID: %v\n", id)
+	logger.Info.Printf("[controllers.DeleteUser]: User deleted successfully from IP: %s, ID: %v", clientIP, id)
 	c.JSON(http.StatusOK, gin.H{"message": "user deleted successfully"})
 }
