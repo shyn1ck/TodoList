@@ -1,3 +1,8 @@
+2024/08/22 01:39:41.138486 Logger initialized successfully
+2024/08/22 01:40:08.855667 Logger initialized successfully
+2024/08/22 01:40:08.941954 Connected to the database successfully
+2024/08/22 01:40:09.094935 Database migrations ran successfully
+2024/08/22 01:40:09.094935 Server started on port 8181
 [GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
 
 [GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
@@ -5,6 +10,8 @@
  - using code:	gin.SetMode(gin.ReleaseMode)
 
 [GIN-debug] GET    /ping                     --> todoList/pkg/controllers.PingPong (3 handlers)
+[GIN-debug] POST   /auth/sign-up             --> todoList/pkg/controllers.SignUp (3 handlers)
+[GIN-debug] POST   /auth/sign-in             --> todoList/pkg/controllers.SignIn (3 handlers)
 [GIN-debug] GET    /users/                   --> todoList/pkg/controllers.GetAllUsers (3 handlers)
 [GIN-debug] GET    /users/:id                --> todoList/pkg/controllers.GetUserByID (3 handlers)
 [GIN-debug] POST   /users/                   --> todoList/pkg/controllers.CreateUser (3 handlers)
@@ -25,12 +32,16 @@
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on :8181
-[GIN] 2024/08/18 - 14:41:51 | 400 |            0s |             ::1 | GET      "/users/1 "
-[GIN] 2024/08/18 - 14:46:43 | 200 |     34.1568ms |             ::1 | GET      "/users/"
-[GIN-debug] redirecting request 301: /users/ --> /users/
-[GIN] 2024/08/18 - 14:48:01 | 200 |       677.7µs |             ::1 | GET      "/users/"
-[GIN] 2024/08/18 - 14:48:38 | 201 |     40.1381ms |             ::1 | POST     "/users/"
-[GIN] 2024/08/18 - 14:48:43 | 500 |     19.4395ms |             ::1 | POST     "/users/"
+2024/08/22 01:41:50.069036 [controllers.CreateUser]: Received request to create a new user from IP: ::1
+2024/08/22 01:41:50.071959 [controllers.CreateUser]: User created successfully from IP: ::1
+[GIN] 2024/08/22 - 01:41:50 | 201 |      3.0968ms |             ::1 | POST     "/users/"
+2024/08/22 01:44:42.452025 [controllers.GetAllUsers]: Received request to get all users from IP: ::1
+2024/08/22 01:44:42.453062 [controllers.GetAllUsers]: Users retrieved successfully from IP: ::1
+[GIN] 2024/08/22 - 01:44:42 | 200 |      1.2688ms |             ::1 | GET      "/users/"
+2024/08/22 01:49:14.796329 Logger initialized successfully
+2024/08/22 01:49:14.874164 Connected to the database successfully
+2024/08/22 01:49:14.939846 Database migrations ran successfully
+2024/08/22 01:49:14.939846 Server started on port 8181
 [GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
 
 [GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
@@ -38,23 +49,40 @@ Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-
  - using code:	gin.SetMode(gin.ReleaseMode)
 
 [GIN-debug] GET    /ping                     --> todoList/pkg/controllers.PingPong (3 handlers)
-[GIN-debug] GET    /users/                   --> todoList/pkg/controllers.GetAllUsers (3 handlers)
-[GIN-debug] GET    /users/:id                --> todoList/pkg/controllers.GetUserByID (3 handlers)
-[GIN-debug] POST   /users/                   --> todoList/pkg/controllers.CreateUser (3 handlers)
-[GIN-debug] PUT    /users/:id                --> todoList/pkg/controllers.UpdateUser (3 handlers)
-[GIN-debug] DELETE /users/:id                --> todoList/pkg/controllers.DeleteUser (3 handlers)
-[GIN-debug] GET    /tasks/                   --> todoList/pkg/controllers.GetAllTasks (3 handlers)
-[GIN-debug] GET    /tasks/:id                --> todoList/pkg/controllers.GetTaskByID (3 handlers)
-[GIN-debug] POST   /tasks/                   --> todoList/pkg/controllers.CreateTask (3 handlers)
-[GIN-debug] PUT    /tasks/:id                --> todoList/pkg/controllers.UpdateTask (3 handlers)
-[GIN-debug] PATCH  /tasks/:id/status         --> todoList/pkg/controllers.ToggleTaskStatus (3 handlers)
-[GIN-debug] DELETE /tasks/:id                --> todoList/pkg/controllers.DeleteTask (3 handlers)
-[GIN-debug] POST   /tasks/insert             --> todoList/pkg/controllers.InsertExistingTasks (3 handlers)
-[GIN-debug] PUT    /tasks/:id/priority       --> todoList/pkg/controllers.SetTaskPriority (3 handlers)
-[GIN-debug] GET    /tasks/status/:status     --> todoList/pkg/controllers.GetTasksByStatus (3 handlers)
-[GIN-debug] GET    /tasks/sort/date          --> todoList/pkg/controllers.SortTasksByDate (3 handlers)
-[GIN-debug] GET    /tasks/sort/status        --> todoList/pkg/controllers.SortTasksByStatus (3 handlers)
-[GIN-debug] GET    /tasks/sort/priority      --> todoList/pkg/controllers.SortTasksByPriority (3 handlers)
+[GIN-debug] POST   /auth/sign-up             --> todoList/pkg/controllers.SignUp (3 handlers)
+[GIN-debug] POST   /auth/sign-in             --> todoList/pkg/controllers.SignIn (3 handlers)
+[GIN-debug] GET    /users/                   --> todoList/pkg/controllers.GetAllUsers (4 handlers)
+[GIN-debug] GET    /users/:id                --> todoList/pkg/controllers.GetUserByID (4 handlers)
+[GIN-debug] POST   /users/                   --> todoList/pkg/controllers.CreateUser (4 handlers)
+[GIN-debug] PUT    /users/:id                --> todoList/pkg/controllers.UpdateUser (4 handlers)
+[GIN-debug] DELETE /users/:id                --> todoList/pkg/controllers.DeleteUser (4 handlers)
+[GIN-debug] GET    /tasks/                   --> todoList/pkg/controllers.GetAllTasks (4 handlers)
+[GIN-debug] GET    /tasks/:id                --> todoList/pkg/controllers.GetTaskByID (4 handlers)
+[GIN-debug] POST   /tasks/                   --> todoList/pkg/controllers.CreateTask (4 handlers)
+[GIN-debug] PUT    /tasks/:id                --> todoList/pkg/controllers.UpdateTask (4 handlers)
+[GIN-debug] PATCH  /tasks/:id/status         --> todoList/pkg/controllers.ToggleTaskStatus (4 handlers)
+[GIN-debug] DELETE /tasks/:id                --> todoList/pkg/controllers.DeleteTask (4 handlers)
+[GIN-debug] POST   /tasks/insert             --> todoList/pkg/controllers.InsertExistingTasks (4 handlers)
+[GIN-debug] PUT    /tasks/:id/priority       --> todoList/pkg/controllers.SetTaskPriority (4 handlers)
+[GIN-debug] GET    /tasks/status/:status     --> todoList/pkg/controllers.GetTasksByStatus (4 handlers)
+[GIN-debug] GET    /tasks/sort/date          --> todoList/pkg/controllers.SortTasksByDate (4 handlers)
+[GIN-debug] GET    /tasks/sort/status        --> todoList/pkg/controllers.SortTasksByStatus (4 handlers)
+[GIN-debug] GET    /tasks/sort/priority      --> todoList/pkg/controllers.SortTasksByPriority (4 handlers)
 [GIN-debug] [WARNING] You trusted all proxies, this is NOT safe. We recommend you to set a value.
 Please check https://pkg.go.dev/github.com/gin-gonic/gin#readme-don-t-trust-all-proxies for details.
 [GIN-debug] Listening and serving HTTP on :8181
+[GIN] 2024/08/22 - 01:49:28 | 401 |            0s |             ::1 | GET      "/users/"
+[GIN] 2024/08/22 - 01:53:43 | 201 |      2.8944ms |             ::1 | POST     "/auth/sign-up"
+[GIN] 2024/08/22 - 01:55:14 | 200 |      1.8247ms |             ::1 | POST     "/auth/sign-in"
+2024/08/22 01:56:14.200491 [controllers.GetAllUsers]: Received request to get all users from IP: ::1
+2024/08/22 01:56:14.201102 [controllers.GetAllUsers]: Users retrieved successfully from IP: ::1
+[GIN] 2024/08/22 - 01:56:14 | 200 |       667.4µs |             ::1 | GET      "/users/"
+2024/08/22 01:57:14.908977 [controllers.GetAllUsers]: Received request to get all users from IP: ::1
+2024/08/22 01:57:14.909496 [controllers.GetAllUsers]: Users retrieved successfully from IP: ::1
+[GIN] 2024/08/22 - 01:57:14 | 200 |      1.0908ms |             ::1 | GET      "/users/"
+[GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+

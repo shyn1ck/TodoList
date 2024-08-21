@@ -2,18 +2,17 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 	"strconv"
+	"todoList/logger"
 	"todoList/models"
 	"todoList/pkg/service"
 )
 
 func CreateTask(c *gin.Context) {
-	log.Println("controllers.CreateTask: Received request to create a task")
+	logger.Info.Println("[CreateTask]: Received request to create a task from IP:", c.ClientIP())
 	var task models.Task
 	if err := c.BindJSON(&task); err != nil {
-		log.Printf("controllers.CreateTask: Failed to bind JSON, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error()})
 		return
@@ -21,37 +20,34 @@ func CreateTask(c *gin.Context) {
 
 	err := service.CreateTask(task)
 	if err != nil {
-		log.Printf("controllers.CreateTask: Failed to create task, error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error()})
 		return
 	}
 
-	log.Println("controllers.CreateTask: Task created successfully")
+	logger.Info.Println("[CreateTask]: Task created successfully by IP:", c.ClientIP())
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Task created successfully"})
 }
 
 func GetAllTasks(c *gin.Context) {
-	log.Println("controllers.GetAllTasks: Received request to get all tasks")
+	logger.Info.Println("[GetAllTasks]: Received request to get all tasks from IP:", c.ClientIP())
 	tasks, err := service.GetAllTasks()
 	if err != nil {
-		log.Printf("controllers.GetAllTasks: Failed to retrieve tasks, error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error()})
 		return
 	}
 
-	log.Println("controllers.GetAllTasks: Tasks retrieved successfully")
+	logger.Info.Println("[GetAllTasks]: Tasks retrieved successfully by IP:", c.ClientIP())
 	c.JSON(http.StatusOK, tasks)
 }
 
 func GetTaskByID(c *gin.Context) {
-	log.Println("controllers.GetTaskByID: Received request to get task by ID")
+	logger.Info.Println("[GetTaskByID]: Received request to get task by ID from IP:", c.ClientIP())
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		log.Printf("controllers.GetTaskByID: Invalid task ID, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid task ID"})
 		return
@@ -59,22 +55,20 @@ func GetTaskByID(c *gin.Context) {
 
 	task, err := service.GetTaskByID(uint(id))
 	if err != nil {
-		log.Printf("controllers.GetTaskByID: Task not found, ID: %v, error: %v\n", id, err)
 		c.JSON(http.StatusNotFound, gin.H{
 			"error": "Task not found"})
 		return
 	}
 
-	log.Printf("controllers.GetTaskByID: Task retrieved successfully, ID: %v\n", id)
+	logger.Info.Printf("[GetTaskByID]: Task retrieved successfully, ID: %v, IP: %v\n", id, c.ClientIP())
 	c.JSON(http.StatusOK, task)
 }
 
 func UpdateTask(c *gin.Context) {
-	log.Println("controllers.UpdateTask: Received request to update task")
+	logger.Info.Println("[UpdateTask]: Received request to update task from IP:", c.ClientIP())
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		log.Printf("controllers.UpdateTask: Invalid task ID, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid task ID"})
 		return
@@ -85,7 +79,6 @@ func UpdateTask(c *gin.Context) {
 		Description string `json:"description"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		log.Printf("controllers.UpdateTask: Failed to bind JSON, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error()})
 		return
@@ -93,23 +86,21 @@ func UpdateTask(c *gin.Context) {
 
 	err = service.UpdateTask(uint(id), input.Title, input.Description)
 	if err != nil {
-		log.Printf("controllers.UpdateTask: Failed to update task, ID: %v, error: %v\n", id, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error()})
 		return
 	}
 
-	log.Printf("controllers.UpdateTask: Task updated successfully, ID: %v\n", id)
+	logger.Info.Printf("[UpdateTask]: Task updated successfully, ID: %v, IP: %v\n", id, c.ClientIP())
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Task updated successfully"})
 }
 
 func ToggleTaskStatus(c *gin.Context) {
-	log.Println("controllers.ToggleTaskStatus: Received request to toggle task status")
+	logger.Info.Println("[ToggleTaskStatus]: Received request to toggle task status from IP:", c.ClientIP())
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		log.Printf("controllers.ToggleTaskStatus: Invalid task ID, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid task ID"})
 		return
@@ -117,23 +108,21 @@ func ToggleTaskStatus(c *gin.Context) {
 
 	err = service.ToggleTaskStatus(uint(id))
 	if err != nil {
-		log.Printf("controllers.ToggleTaskStatus: Failed to toggle task status, ID: %v, error: %v\n", id, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error()})
 		return
 	}
 
-	log.Printf("controllers.ToggleTaskStatus: Task status toggled successfully, ID: %v\n", id)
+	logger.Info.Printf("[ToggleTaskStatus]: Task status toggled successfully, ID: %v, IP: %v\n", id, c.ClientIP())
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Task status toggled successfully"})
 }
 
 func DeleteTask(c *gin.Context) {
-	log.Println("controllers.DeleteTask: Received request to delete task")
+	logger.Info.Println("[DeleteTask]: Received request to delete task from IP:", c.ClientIP())
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		log.Printf("controllers.DeleteTask: Invalid task ID, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid task ID"})
 		return
@@ -141,22 +130,20 @@ func DeleteTask(c *gin.Context) {
 
 	err = service.DeleteTask(uint(id))
 	if err != nil {
-		log.Printf("controllers.DeleteTask: Failed to delete task, ID: %v, error: %v\n", id, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error()})
 		return
 	}
 
-	log.Printf("controllers.DeleteTask: Task deleted successfully, ID: %v\n", id)
+	logger.Info.Printf("[DeleteTask]: Task deleted successfully, ID: %v, IP: %v\n", id, c.ClientIP())
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Task deleted successfully"})
 }
 
 func InsertExistingTasks(c *gin.Context) {
-	log.Println("controllers.InsertExistingTasks: Received request to insert existing tasks")
+	logger.Info.Println("[InsertExistingTasks]: Received request to insert existing tasks from IP:", c.ClientIP())
 	var tasks []models.Task
 	if err := c.ShouldBindJSON(&tasks); err != nil {
-		log.Printf("controllers.InsertExistingTasks: Failed to bind JSON, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error()})
 		return
@@ -164,23 +151,21 @@ func InsertExistingTasks(c *gin.Context) {
 
 	err := service.InsertExistingTasks(tasks)
 	if err != nil {
-		log.Printf("controllers.InsertExistingTasks: Failed to insert tasks, error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error()})
 		return
 	}
 
-	log.Println("controllers.InsertExistingTasks: Tasks inserted successfully")
+	logger.Info.Println("[InsertExistingTasks]: Tasks inserted successfully by IP:", c.ClientIP())
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Tasks inserted successfully"})
 }
 
 func SetTaskPriority(c *gin.Context) {
-	log.Println("controllers.SetTaskPriority: Received request to set task priority")
+	logger.Info.Println("[SetTaskPriority]: Received request to set task priority from IP:", c.ClientIP())
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		log.Printf("controllers.SetTaskPriority: Invalid task ID, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid task ID"})
 		return
@@ -190,7 +175,6 @@ func SetTaskPriority(c *gin.Context) {
 		Priority int `json:"priority"`
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
-		log.Printf("controllers.SetTaskPriority: Failed to bind JSON, error: %v\n", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error()})
 		return
@@ -198,70 +182,65 @@ func SetTaskPriority(c *gin.Context) {
 
 	err = service.SetTaskPriority(uint(id), input.Priority)
 	if err != nil {
-		log.Printf("controllers.SetTaskPriority: Failed to set task priority, ID: %v, error: %v\n", id, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error()})
 		return
 	}
 
-	log.Printf("controllers.SetTaskPriority: Task priority set successfully, ID: %v\n", id)
+	logger.Info.Printf("[SetTaskPriority]: Task priority set successfully, ID: %v, IP: %v\n", id, c.ClientIP())
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Task priority set successfully"})
 }
 
 func GetTasksByStatus(c *gin.Context) {
-	log.Println("controllers.GetTasksByStatus: Received request to get tasks by status")
+	logger.Info.Println("[GetTasksByStatus]: Received request to get tasks by status from IP:", c.ClientIP())
 	status := c.Param("status")
 	tasks, err := service.GetTasksByStatus(status)
 	if err != nil {
-		log.Printf("controllers.GetTasksByStatus: Failed to retrieve tasks by status, status: %v, error: %v\n", status, err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error()})
 		return
 	}
 
-	log.Printf("controllers.GetTasksByStatus: Tasks retrieved successfully by status, status: %v\n", status)
+	logger.Info.Printf("[GetTasksByStatus]: Tasks retrieved successfully by status, status: %v, IP: %v\n", status, c.ClientIP())
 	c.JSON(http.StatusOK, tasks)
 }
 
 func SortTasksByDate(c *gin.Context) {
-	log.Println("controllers.SortTasksByDate: Received request to sort tasks by date")
+	logger.Info.Println("[SortTasksByDate]: Received request to sort tasks by date from IP:", c.ClientIP())
 	tasks, err := service.SortTasksByDate()
 	if err != nil {
-		log.Printf("controllers.SortTasksByDate: Failed to sort tasks by date, error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error()})
 		return
 	}
 
-	log.Println("controllers.SortTasksByDate: Tasks sorted by date successfully")
+	logger.Info.Println("[SortTasksByDate]: Tasks sorted by date successfully by IP:", c.ClientIP())
 	c.JSON(http.StatusOK, tasks)
 }
 
 func SortTasksByStatus(c *gin.Context) {
-	log.Println("controllers.SortTasksByStatus: Received request to sort tasks by status")
+	logger.Info.Println("[SortTasksByStatus]: Received request to sort tasks by status from IP:", c.ClientIP())
 	tasks, err := service.SortTasksByStatus()
 	if err != nil {
-		log.Printf("controllers.SortTasksByStatus: Failed to sort tasks by status, error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error()})
 		return
 	}
 
-	log.Println("controllers.SortTasksByStatus: Tasks sorted by status successfully")
+	logger.Info.Println("[SortTasksByStatus]: Tasks sorted by status successfully by IP:", c.ClientIP())
 	c.JSON(http.StatusOK, tasks)
 }
 
 func SortTasksByPriority(c *gin.Context) {
-	log.Println("controllers.SortTasksByPriority: Received request to sort tasks by priority")
+	logger.Info.Println("[SortTasksByPriority]: Received request to sort tasks by priority from IP:", c.ClientIP())
 	tasks, err := service.SortTasksByPriority()
 	if err != nil {
-		log.Printf("controllers.SortTasksByPriority: Failed to sort tasks by priority, error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error()})
 		return
 	}
 
-	log.Println("controllers.SortTasksByPriority: Tasks sorted by priority successfully")
+	logger.Info.Println("[SortTasksByPriority]: Tasks sorted by priority successfully by IP:", c.ClientIP())
 	c.JSON(http.StatusOK, tasks)
 }

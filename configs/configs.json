@@ -1,0 +1,29 @@
+{
+  "auth": {
+    "jwt_ttl_minutes": 60
+  },
+  "log_params": {
+    "log_directory": "logs",
+    "log_info": "info.log",
+    "log_error": "error.log",
+    "log_warn": "warn.log",
+    "log_debug": "debug.log",
+    "max_size_megabytes": 10,
+    "max_backups": 4,
+    "max_age": 30,
+    "compress": true,
+    "local_time": true
+  },
+  "app_params": {
+    "gin_mode": "release",
+    "port_run": "8181",
+    "server_url": "localhost",
+    "server_name": "coinkeeper_service"
+  },
+  "postgres_params": {
+    "host": "localhost",
+    "port": "5432",
+    "user": "postgres",
+    "database": "postgres"
+  }
+}
