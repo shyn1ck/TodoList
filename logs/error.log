@@ -1,3 +1,0 @@
-2024/08/22 01:39:41.229193 Failed to connect to database: failed to connect to `user=postgres database=todo_list_db`: [::1]:5432 (localhost): server error: ВАЖНО: база данных "todo_list_db" не существует (SQLSTATE 3D000)
-2024/08/22 01:41:50.070573 [repository.GetUserByUsername]: Failed to fetch user by username ivan299, error: record not found
-2024/08/22 01:53:43.925160 [repository.GetUserByUsername]: Failed to fetch user by username shyn1ck, error: record not found
